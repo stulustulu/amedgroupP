@@ -1,9 +1,18 @@
----
-title: "Report"
 author: "Meena Zora"
 date: "2023-03-22"
 output: html_document
 ---
+
+
+# Sample description and definition of variables
+
+Sample of 763 females over the age of 21 with pima indian heritage. Sample collected on 1990.
+
+Diabetes pedigree function: A function that scores the likelihood of diabetes based on family history.
+Diabetes = 0 = Did not get diabetes
+Diabetes = 1 = Did get diabetes
+
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -153,13 +162,8 @@ summary(dia.glm2)
 
 ```
 
-# Model selection;AIC method
+# Model interpretation
 ```{r}
-library(MASS)
-lmAIC = stepAIC(dia.glm)
-lmAIC2 = stepAIC(dia.glm2)
-dia.glm2
-
 library(equatiomatic)
 equatiomatic::extract_eq(dia.glm2, use_coefs = TRUE)
 ```
@@ -168,4 +172,49 @@ fitted model:
 $$
 \log\left[ \frac { \widehat{P( \operatorname{Outcome} = \operatorname{1} )} }{ 1 - \widehat{P( \operatorname{Outcome} = \operatorname{1} )} } \right] = -7.95 + 0.15(\operatorname{Pregnancies}) + 0.03(\operatorname{Glucose}) - 0.01(\operatorname{BloodPressure}) + 0.08(\operatorname{BMI}) + 0.91(\operatorname{DiabetesPedigreeFunction})
 $$
+# Interpretation of log model--> Make this more interpretable for general audience per the rubric
+
+**Pregnancies:** On average, for each additional pregnancies, the log-odds of getting diabetes is 0.15, holding all other independent variable constant
+**Glucose:** On average, for each unit increase in glucose, the log-odds of getting diabetes is 0.03, holding all other independent variable constant
+**Blood pressure**: on average, for each decrease in blood pressure, the log-odds of getting diabetes is 0.02, holding all othe independent variables constant
+**BMI:** On average, for each unit increase in BMI, the log-odds of getting diabetes is 0.08, holding all other indepdent variable constant
+**DiabetesPedigree function:** For each unit increase in Diabetes Pedigree fiunction, the log-odds of getting diabetes is 0.91, holding all other indpendent variable constant.
+
+# Example for this model; converting to probabilities for an example
+If a women had 3 pregnancies, 148 g of glucose, blood pressure of 72, bmi of 19 and a pedigree function of 0.3. The probability that this individual goes on to develop diabetes is 21%.
+
+```{r}
+new_data = data.frame(Pregnancies = 3, Glucose = 148, BloodPressure = 72, BMI= 19, DiabetesPedigreeFunction=0.3)
+predict(dia.glm2, newdata=new_data, type="response")
+
+```
+
+# Outputting our model coefficients
+```{r}
+tab_model(dia.glm2)
+# I think this transforms it to just odds, and not log-odds. I dont know how to change odds to probabilities. I think changing it to probability will be really good. 
+```
+# Interpretation of model with odds --> 
+
+**Pregnancies:** On average, for 10 additional pregnancies, the log-odds of getting diabetes is 0.15, holding all other independent variable constant
+
+**Glucose:** On average, for a 10 unit increase in glucose, the log-odds of getting diabetes is 0.03, holding all other independent variable constant
+**Blood pressure**: on average, for a 10 unit decrease in blood pressure, the log-odds of getting diabetes is 0.02, holding all othe independent variables constant
+**BMI:** On average, for each unit increase in BMI, the log-odds of getting diabetes is 0.08, holding all other indepdent variable constant
+**DiabetesPedigree function:** For a 10 unit increase in Diabetes Pedigree fiunction, the log-odds of getting diabetes is 0.91, holding all other indpendent variable constant.
+
+
+# DO this FOR ALL MODEL WE CREATE TO SEE WHICH MODEL WAS THE MOST ACCURATE!!!
+# Visualising model coefficients
+```{r}
+plot_model(dia.glm2)
+```
+
+# Evaluating performance of our model --> In sample
+This is the resubstituition error rate
+```{r}
+
+```
+
+# Evaluating performance of our model--> Out sample
 
