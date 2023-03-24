@@ -125,9 +125,8 @@ library(ggfortify)
 library(ggplot2)
 dia.lm = lm(Outcome~., data= diabetes)
 autoplot(dia.aov, which= 1:2)
-
+# Not sure if residuals are how u check assumptions
 ```
-Unnormal, unequal variances, non-linear. Need to do some logarithms first. Full model--> does not meet assumptions. Need to research on how to fix. Will complete by sunday.
 
 ```{r}
 
