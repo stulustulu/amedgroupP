@@ -118,18 +118,13 @@ ggarrange(boxplot1, boxplot2, boxplot3, boxplot4,boxplot5, boxplot6, bargraph1, 
 
 
 
-
-# Assumption checking
 ```{r}
 library(ggfortify)
 library(ggplot2)
-dia.lm = lm(Outcome~., data= diabetes)
-autoplot(dia.aov, which= 1:2)
-# Not sure if residuals are how u check assumptions
-```
-
-```{r}
+dia.glm = glm(Outcome~., data= diabetes, family=binomial)
+summary(dia.glm)
 
 ```
+
 
 
