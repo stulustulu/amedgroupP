@@ -1,0 +1,136 @@
+---
+title: "Report"
+author: "Meena Zora"
+date: "2023-03-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(qtlcharts)
+library(corrgram)
+library(sjPlot)
+library(ggpubr)
+
+
+diabetes = read.csv("diabetes.csv")
+glimpse(diabetes)
+diabetes$Outcome = as.factor(diabetes$Outcome) # Not sure if we need it to act as an integer or factor but for the sake of graphical summary. I will be converting it to a factor. Can change later for statistical analysis
+glimpse(diabetes)
+
+
+```
+
+# Exploratory data analysis
+
+## Glucose vs outcome
+
+```{r}
+# Boxplot of glucose and outcome
+
+boxplot1 = diabetes %>% ggplot()+
+  aes(x=Glucose, y= Outcome)|>
+  geom_boxplot()
+boxplot1
+
+```
+Median differs from each other. Individuals with no diabetes appear to have a lower glucose levels than individuals that did get diabetes. The spread is uneven. It appears that glucose will be a significant predictor of diabetes outcome. However, without further statistical analysis we cannot be sure that there is a significant relationship between the 2 variables.
+
+## Pregnancies vs outcome
+```{r}
+# Bargraph of amount of pregnancies vs outcome of pregnancies
+
+bargraph1=diabetes|> group_by(Outcome, Pregnancies)|> count()|>
+  ggplot()+aes(x=Pregnancies, y=n, fill= Outcome)+
+  geom_bar(stat="identity", position="fill")+
+  scale_y_continuous(labels=scales::percent)+
+  labs(y="", x="Amount of times pregnant", fill="Outcome of diabetes")
+```
+Appears that the more amount of pregnancies, the more likely they are to have diabetes. However, we cannot be sure unless we perform further statistical analysis to confirm. Bargraph may not be a good move if there is only one person that has been pregnant 17 times. Can use a boxplot
+
+
+
+## Blood pressure vs outcome
+```{r}
+boxplot2 = diabetes %>% ggplot()+
+  aes(x=BloodPressure, y= Outcome)|>
+  geom_boxplot()
+boxplot2
+
+```
+There appears to be systematic outliers in both boxplots. The spread and median are roughly the same. It does not appear like blood pressure will be a significant predictor of diabetes outcome. But this requires more statistical analysis to confirm. This appears to have equal variances and normality. 
+
+## Skin thickness vs outcome
+```{r}
+boxplot3 = diabetes %>% ggplot()+
+  aes(x=SkinThickness, y= Outcome)|>
+  geom_boxplot()
+boxplot3
+
+```
+Doesnt appear like there is a large difference between skin thickness and the chances of getting diabetes, thus it doesnt appear that skin thickness will be a good predictor of whether or not the individual will getr diabetes. But nothing can be ascertained without further statistical analysis to confirm.
+
+## Insulin vs Diabetes outcome
+```{r}
+boxplot4 = diabetes %>% ggplot()+
+  aes(x=Insulin, y= Outcome)|>
+  geom_boxplot()
+boxplot4
+```
+Seems skewed. Unequal variances. Appears to have differences. May be a significant predictor of diabetes outcome. There are multiple outliers.
+
+##BMI and diabetes outcome
+
+```{r}
+boxplot5 = diabetes %>% ggplot()+
+  aes(x=DiabetesPedigreeFunction, y= Outcome)|>
+  geom_boxplot()
+boxplot5
+
+```
+Need to research what this is
+
+##Age vs outcome
+
+```{r}
+boxplot6 = diabetes %>% ggplot()+
+  aes(x=log(Age), y= Outcome)|>
+  geom_boxplot()
+
+  
+  
+  
+boxplot6
+
+```
+There is a difference in median between those that ended up getting diabetes and those that didnt end up getting diabetes. There appears to be outliers and the distribution is skewed. Outliers disappear when logging it. Not sure if that is the right choice--> Requires more research on method
+
+## All together
+
+```{r}
+
+ggarrange(boxplot1, boxplot2, boxplot3, boxplot4,boxplot5, boxplot6, bargraph1, ncol=2)
+```
+
+
+
+
+# Assumption checking
+```{r}
+library(ggfortify)
+library(ggplot2)
+dia.lm = lm(Outcome~., data= diabetes)
+autoplot(dia.aov, which= 1:2)
+
+```
+Unnormal, unequal variances, non-linear. Need to do some logarithms first. Full model--> does not meet assumptions. Need to research on how to fix. Will complete by sunday.
+
+```{r}
+
+```
+
+
