@@ -116,8 +116,28 @@ There is a difference in median between those that ended up getting diabetes and
 ggarrange(boxplot1, boxplot2, boxplot3, boxplot4,boxplot5, boxplot6, bargraph1, ncol=2)
 ```
 
+# Assumption checkking
+
+Skin thickness, insulin and age are not significant predictors of diabetes. We can remove this from the model. We fail to reject the null hypothesis that Skin thickness, insulin and age are not a significant predictor of diabetes outcomes. For the factors, we reject the null hypothesis that they are not a significant predictor, there is evidence to suggest, at a significance level of 5%, that they are a good predictor of diabetes outcome.
+
+Independence : the observations should not come from repeated measurements or matched data.
+Large sample size: There are 768 observations. the assumptions have been met.
+
+### Checking for multi-collinearity
+```{r}
+cor(diabetes)
+```
+Multicollinearity: There should be no independent variables that are highly correlated with each other. This assumption has not been violated as the highest correaltion is 0.55.
+
+### Linearity of log odds
+```{r}
+
+```
 
 
+
+
+# Model selection
 ```{r}
 library(ggfortify)
 library(ggplot2)
@@ -126,5 +146,26 @@ summary(dia.glm)
 
 ```
 
+## Reduced model
+```{r}
+dia.glm2 = glm(Outcome~ Pregnancies+ Glucose+ BloodPressure+BMI + DiabetesPedigreeFunction, data= diabetes, family=binomial)
+summary(dia.glm2)
 
+```
+
+# Model selection;AIC method
+```{r}
+library(MASS)
+lmAIC = stepAIC(dia.glm)
+lmAIC2 = stepAIC(dia.glm2)
+dia.glm2
+
+library(equatiomatic)
+equatiomatic::extract_eq(dia.glm2, use_coefs = TRUE)
+```
+
+fitted model:
+$$
+\log\left[ \frac { \widehat{P( \operatorname{Outcome} = \operatorname{1} )} }{ 1 - \widehat{P( \operatorname{Outcome} = \operatorname{1} )} } \right] = -7.95 + 0.15(\operatorname{Pregnancies}) + 0.03(\operatorname{Glucose}) - 0.01(\operatorname{BloodPressure}) + 0.08(\operatorname{BMI}) + 0.91(\operatorname{DiabetesPedigreeFunction})
+$$
 
