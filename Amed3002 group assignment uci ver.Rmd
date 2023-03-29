@@ -1,0 +1,187 @@
+---
+title: "AMED group project"
+author: "Meena Zora"
+date: "2023-03-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+library(sjPlot)
+library(ggpubr)
+library(MASS)
+library(visdat)
+library(GGally)
+library(ggpubr)
+library(pROC) # Derived from chatgpt
+library(equatiomatic)
+
+```
+# Data description and aim
+
+Finding the best diabetes predictor model and predicting the probablity of the outcome using the model
+
+# EDA and data cleaning
+```{r}
+dia = read.csv("diabetes_data_upload.csv")
+vis_miss(dia)
+glimpse(dia)
+
+d1 = dia|>
+  mutate(
+    Outcome = class, 
+    Weight.loss = sudden.weight.loss)
+
+d2 = subset(d1, select = -c(class, sudden.weight.loss))
+glimpse(d2)
+
+# Changing response to integers
+diabetes = d2|>
+  mutate(Outcome= ifelse(Outcome=="Positive",1,0),
+         Polyuria= ifelse(Polyuria=="Yes",1,0),
+         Polydipsia= ifelse(Polydipsia=="Yes",1,0),
+         Weight.loss= ifelse(Weight.loss=="Yes",1,0),
+         Polyphagia= ifelse(Polyphagia=="Yes",1,0),
+         Genital.thrush= ifelse(Genital.thrush=="Yes",1,0),
+         visual.blurring= ifelse(visual.blurring=="Yes",1,0),
+         Itching= ifelse(Itching=="Yes",1,0),
+         Irritability= ifelse(Irritability=="Yes",1,0),
+         delayed.healing= ifelse(delayed.healing=="Yes",1,0),
+         partial.paresis= ifelse(partial.paresis=="Yes",1,0),
+         muscle.stiffness= ifelse(muscle.stiffness=="Yes",1,0),
+         Alopecia= ifelse(Alopecia=="Yes",1,0),
+         Obesity= ifelse(Obesity=="Yes",1,0),
+         weakness= ifelse(weakness=="Yes",1,0))
+
+
+```
+## Data description
+Yes or positive =1
+No or negative = 0
+Male = 1
+Female = 0
+# Assumption checking:
+**Linearity of the logit:** As only one predictor variable is continuous, with the rest being binary, we can say this is not relevant as the relationships and the correlation coefficient will be non-linear.
+
+**Independence of observations:** We have read the data source, and it appears that the observations were not taken more than once from each person. In addition, none of the variables have relationships with each other that influence one another
+
+**Multicollinearity:**  
+
+**Perfect separation**: 
+
+```{r}
+library(car)
+dia.glmfull = glm(Outcome~., data= diabetes, family=binomial)
+vif(dia.glmfull)
+```
+The variance inflation factor is all below 3 thus we can say there is no multicollinearity between the predictor variables. 
+
+
+# Graphical summary
+
+# Sudden weight loss vs outcome
+```{r}
+bargraph1= d2|> group_by(Weight.loss, Outcome)|> count()|>
+  ggplot(aes(x= Weight.loss, y=n, fill= Outcome))+
+  geom_bar(stat="identity", position="fill", )+
+  scale_y_continuous(labels = scales::percent)+
+  labs(y="", x="Experienced sudden weight loss", fill="Outcome of diabetes")
+bargraph1
+
+```
+https://stackoverflow.com/questions/43882072/changing-ggplot-legend-unit-scale
+
+## Gender vs outcome
+```{r}
+bargraph2= d2|> group_by(Gender, Outcome)|> count()|>
+  ggplot(aes(x= Gender, y=n, fill= Outcome))+
+  geom_bar(stat="identity", position="fill", )+
+  scale_y_continuous(labels = scales::percent)+
+  labs(y="", x="Gender", fill="Outcome of diabetes")
+bargraph2
+
+```
+
+## Histogram of everything
+```{r}
+hist1=d2|> ggplot()+ aes(x=Age, fill=Outcome)+ geom_density()+ facet_grid(~Gender)
+
+```
+
+
+# Model selection
+```{r}
+library(car)
+dia.glmfull = glm(Outcome~., data= diabetes, family=binomial)
+dia.glm0 = glm(Outcome~1, data= diabetes, family=binomial)
+n=nrow(diabetes)
+
+```
+
+## Backward AIC
+
+```{r}
+
+AicBack=stepAIC(dia.glmfull, direction="backward", trace= FALSE)
+
+```
+## Forward AIC
+
+```{r}
+AicFor = stepAIC(dia.glm0,scope = list(lower = dia.glm0,upper = dia.glmfull),direction = "forward",trace = TRUE)
+summary(AicFor)
+
+```
+
+
+
+## Backward BIC
+```{r}
+
+BicBack=stepAIC(dia.glmfull, direction = "backward", k = log(n), trace = F)
+summary(BicBack)
+
+```
+
+## Forward AIC
+```{r}
+BicFor = stepAIC(dia.glm0,scope = list(lower = dia.glm0,upper = dia.glmfull),direction = "forward", k = log(n), trace = F)
+```
+
+
+
+
+## Comparison of the models
+```{r}
+tab_model(AicBack, AicFor, BicBack, BicFor, digits = 3, show.ci = F, auto.label = F, dv.labels = c("Back.AIC","For.AIC","Back.BIC", "For.BIC"))
+```
+As the model for back and forward bic is the same, we will just hold the backward aic. As 2 of the models have been computed using AIC, and 1 of them being BIC. We cannot directly compare. Instead, we will be comparing it using in sample performance. According to Garth Tarr 2022, data2002 lecture 28. If the AIC differs by 1 or 2, it can be deemed as equally fitting. 
+
+
+# Performance evaluation: Sourced by chatgpt
+AUC-ROC: AUC-ROC is a metric that measures the ability of the model to distinguish between positive and negative cases. Higher values of AUC-ROC indicate better model performance. You can calculate AUC-ROC using the pROC package:CHATGPT--> https://machinelearningmastery.com/assessing-comparing-classifier-performance-roc-curves-2/
+```{r, warning=FALSE}
+pred1 <- predict(AicBack, type = "response")
+roc(diabetes$Outcome, pred1)$auc
+
+pred2 = predict(AicFor, type = "response")
+roc(diabetes$Outcome, pred2)$auc
+
+pred3 = predict(BicBack, type = "response")
+roc(diabetes$Outcome, pred3)$auc
+```
+Despite Backward AIC having the highest prediction, with it predicting 98.25% of the observed data correctly. It is not by a large margin with forward AIC having an accuracy of 98.24 and Bic having a auc-roc of 97.71%. Thus, we deicded to retain the BIC model as it is just as effective as the other model but with less predictors.
+
+```{r}
+extract_eq(BicBack, use_coefs = TRUE)
+```
+
+
+# Out-sample performance assessment
+```{r}
+
+```
+
